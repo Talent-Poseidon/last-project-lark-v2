@@ -1,0 +1,236 @@
+Run pnpm test:e2e
+
+> nextjs-prisma-boilerplate@1.0.0 test:e2e /home/runner/work/base-template-monster/base-template-monster
+> playwright test
+
+[dotenv@17.2.4] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+[WebServer] ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+Running 7 tests using 1 worker
+[dotenv@17.2.4] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+Error: [WebServer] [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[WebServer]     at Module.callback (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:4314:30)
+[WebServer]     at async AuthInternal (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:5148:24)
+[WebServer]     at async Auth (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:5370:34)
+[WebServer]     at async signIn (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/[root-of-the-server]__66153bfb._.js:4165:17)
+[WebServer]     at async signInWithEmail (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/[root-of-the-server]__0bd11d84._.js:219:9)
+[WebServer]     at async executeActionAndPrepareForRender (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:3803)
+[WebServer]     at async /home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:1109
+[WebServer]     at async handleAction (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:34:23616)
+[WebServer]     at async renderToHTMLOrFlightImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:41:42130)
+[WebServer]     at async doRender (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3081:28)
+[WebServer]     at async AppPageRouteModule.handleResponse (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:43:64241)
+[WebServer]     at async handleResponse (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3287:32)
+[WebServer]     at async Module.handler (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3658:20)
+[WebServer]     at async DevServer.renderToResponseWithComponentsImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1442:9)
+[WebServer]     at async DevServer.renderPageComponent (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1494:24)
+[WebServer]     at async DevServer.renderToResponseImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1544:32)
+[WebServer]     at async DevServer.pipeImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1038:25)
+[WebServer]     at async NextNodeServer.handleCatchallRenderRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/next-server.js:395:17)
+[WebServer]     at async DevServer.handleRequestImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:929:17)
+[WebServer]     at async /home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/dev/next-dev-server.js:387:20
+[WebServer]     at async Span.traceAsyncFn (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/trace/trace.js:157:20)
+[WebServer]     at async DevServer.handleRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/dev/next-dev-server.js:383:24)
+[WebServer]     at async invokeRender (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:248:21)
+[WebServer]     at async handleRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:447:24)
+[WebServer]     at async requestHandlerImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:496:13)
+[WebServer]     at async Server.requestListener (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/start-server.js:226:13)
+×[dotenv@17.2.4] injecting env (0) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+Error: [WebServer] [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[WebServer]     at Module.callback (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:4314:30)
+[WebServer]     at async AuthInternal (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:5148:24)
+[WebServer]     at async Auth (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:5370:34)
+[WebServer]     at async signIn (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/[root-of-the-server]__66153bfb._.js:4165:17)
+[WebServer]     at async signInWithEmail (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/[root-of-the-server]__0bd11d84._.js:219:9)
+[WebServer]     at async executeActionAndPrepareForRender (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:3803)
+[WebServer]     at async /home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:1109
+[WebServer]     at async handleAction (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:34:23616)
+[WebServer]     at async renderToHTMLOrFlightImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:41:42130)
+[WebServer]     at async doRender (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3081:28)
+[WebServer]     at async AppPageRouteModule.handleResponse (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:43:64241)
+[WebServer]     at async handleResponse (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3287:32)
+[WebServer]     at async Module.handler (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3658:20)
+[WebServer]     at async DevServer.renderToResponseWithComponentsImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1442:9)
+[WebServer]     at async DevServer.renderPageComponent (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1494:24)
+[WebServer]     at async DevServer.renderToResponseImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1544:32)
+[WebServer]     at async DevServer.pipeImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1038:25)
+[WebServer]     at async NextNodeServer.handleCatchallRenderRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/next-server.js:395:17)
+[WebServer]     at async DevServer.handleRequestImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:929:17)
+[WebServer]     at async /home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/dev/next-dev-server.js:387:20
+[WebServer]     at async Span.traceAsyncFn (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/trace/trace.js:157:20)
+[WebServer]     at async DevServer.handleRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/dev/next-dev-server.js:383:24)
+[WebServer]     at async invokeRender (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:248:21)
+[WebServer]     at async handleRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:447:24)
+[WebServer]     at async requestHandlerImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:496:13)
+[WebServer]     at async Server.requestListener (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/start-server.js:226:13)
+×[dotenv@17.2.4] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+Error: [WebServer] [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[WebServer]     at Module.callback (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:4314:30)
+[WebServer]     at async AuthInternal (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:5148:24)
+[WebServer]     at async Auth (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:5370:34)
+[WebServer]     at async signIn (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/[root-of-the-server]__66153bfb._.js:4165:17)
+[WebServer]     at async signInWithEmail (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/[root-of-the-server]__0bd11d84._.js:219:9)
+[WebServer]     at async executeActionAndPrepareForRender (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:3803)
+[WebServer]     at async /home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:1109
+[WebServer]     at async handleAction (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:34:23616)
+[WebServer]     at async renderToHTMLOrFlightImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:41:42130)
+[WebServer]     at async doRender (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3081:28)
+[WebServer]     at async AppPageRouteModule.handleResponse (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:43:64241)
+[WebServer]     at async handleResponse (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3287:32)
+[WebServer]     at async Module.handler (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3658:20)
+[WebServer]     at async DevServer.renderToResponseWithComponentsImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1442:9)
+[WebServer]     at async DevServer.renderPageComponent (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1494:24)
+[WebServer]     at async DevServer.renderToResponseImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1544:32)
+[WebServer]     at async DevServer.pipeImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1038:25)
+[WebServer]     at async NextNodeServer.handleCatchallRenderRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/next-server.js:395:17)
+[WebServer]     at async DevServer.handleRequestImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:929:17)
+[WebServer]     at async /home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/dev/next-dev-server.js:387:20
+[WebServer]     at async Span.traceAsyncFn (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/trace/trace.js:157:20)
+[WebServer]     at async DevServer.handleRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/dev/next-dev-server.js:383:24)
+[WebServer]     at async invokeRender (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:248:21)
+[WebServer]     at async handleRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:447:24)
+[WebServer]     at async requestHandlerImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:496:13)
+[WebServer]     at async Server.requestListener (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/start-server.js:226:13)
+F[dotenv@17.2.4] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+Error: [WebServer] [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[WebServer]     at Module.callback (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:4314:30)
+[WebServer]     at async AuthInternal (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:5148:24)
+[WebServer]     at async Auth (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/691c0_@auth_core_77d0c327._.js:5370:34)
+[WebServer]     at async signIn (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/[root-of-the-server]__66153bfb._.js:4165:17)
+[WebServer]     at async signInWithEmail (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/[root-of-the-server]__0bd11d84._.js:219:9)
+[WebServer]     at async executeActionAndPrepareForRender (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:3803)
+[WebServer]     at async /home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:1109
+[WebServer]     at async handleAction (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:34:23616)
+[WebServer]     at async renderToHTMLOrFlightImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:41:42130)
+[WebServer]     at async doRender (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3081:28)
+[WebServer]     at async AppPageRouteModule.handleResponse (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:43:64241)
+[WebServer]     at async handleResponse (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3287:32)
+[WebServer]     at async Module.handler (/home/runner/work/base-template-monster/base-template-monster/.next/dev/server/chunks/ssr/4ecce_next_dist_10c5d31e._.js:3658:20)
+[WebServer]     at async DevServer.renderToResponseWithComponentsImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1442:9)
+[WebServer]     at async DevServer.renderPageComponent (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1494:24)
+[WebServer]     at async DevServer.renderToResponseImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1544:32)
+[WebServer]     at async DevServer.pipeImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:1038:25)
+[WebServer]     at async NextNodeServer.handleCatchallRenderRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/next-server.js:395:17)
+[WebServer]     at async DevServer.handleRequestImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/base-server.js:929:17)
+[WebServer]     at async /home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/dev/next-dev-server.js:387:20
+[WebServer]     at async Span.traceAsyncFn (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/trace/trace.js:157:20)
+[WebServer]     at async DevServer.handleRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/dev/next-dev-server.js:383:24)
+[WebServer]     at async invokeRender (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:248:21)
+[WebServer]     at async handleRequest (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:447:24)
+[WebServer]     at async requestHandlerImpl (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/router-server.js:496:13)
+[WebServer]     at async Server.requestListener (/home/runner/work/base-template-monster/base-template-monster/node_modules/.pnpm/next@16.1.6_@playwright+test@1.58.2_react-dom@19.2.3_react@19.2.3__react@19.2.3/node_modules/next/dist/server/lib/start-server.js:226:13)
+··×[dotenv@17.2.4] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+±···
+
+  1) [chromium] › tests/e2e/auth/login.spec.ts:4:7 › Login Flow › should login successfully with valid admin credentials 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/dashboard/
+    Received string:  "http://localhost:3000/auth/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        9 × unexpected value "http://localhost:3000/auth/login"
+
+
+      14 |
+      15 |     // Expect redirection to dashboard
+    > 16 |     await expect(page).toHaveURL(/\/dashboard/);
+         |                        ^
+      17 |     
+      18 |     // Expect session persistence/user info
+      19 |     // Adjust selector based on actual dashboard implementation
+        at /home/runner/work/base-template-monster/base-template-monster/tests/e2e/auth/login.spec.ts:16:24
+
+    Error Context: test-results/auth-login-Login-Flow-shou-59b87-ith-valid-admin-credentials-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/dashboard/
+    Received string:  "http://localhost:3000/auth/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        9 × unexpected value "http://localhost:3000/auth/login"
+
+
+      14 |
+      15 |     // Expect redirection to dashboard
+    > 16 |     await expect(page).toHaveURL(/\/dashboard/);
+         |                        ^
+      17 |     
+      18 |     // Expect session persistence/user info
+      19 |     // Adjust selector based on actual dashboard implementation
+        at /home/runner/work/base-template-monster/base-template-monster/tests/e2e/auth/login.spec.ts:16:24
+
+    Error Context: test-results/auth-login-Login-Flow-shou-59b87-ith-valid-admin-credentials-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-login-Login-Flow-shou-59b87-ith-valid-admin-credentials-chromium-retry1/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/auth-login-Login-Flow-shou-59b87-ith-valid-admin-credentials-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/dashboard/
+    Received string:  "http://localhost:3000/auth/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        9 × unexpected value "http://localhost:3000/auth/login"
+
+
+      14 |
+      15 |     // Expect redirection to dashboard
+    > 16 |     await expect(page).toHaveURL(/\/dashboard/);
+         |                        ^
+      17 |     
+      18 |     // Expect session persistence/user info
+      19 |     // Adjust selector based on actual dashboard implementation
+        at /home/runner/work/base-template-monster/base-template-monster/tests/e2e/auth/login.spec.ts:16:24
+
+    Error Context: test-results/auth-login-Login-Flow-shou-59b87-ith-valid-admin-credentials-chromium-retry2/error-context.md
+
+  2) [chromium] › tests/e2e/auth/register.spec.ts:23:7 › Registration Flow › should fail when registering with existing email 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('text=User already exists')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for locator('text=User already exists')
+
+
+      32 |
+      33 |     // Expect error message
+    > 34 |     await expect(page.locator('text=User already exists')).toBeVisible();
+         |                                                            ^
+      35 |   });
+      36 | });
+      37 |
+        at /home/runner/work/base-template-monster/base-template-monster/tests/e2e/auth/register.spec.ts:34:60
+
+    Error Context: test-results/auth-register-Registration-5f7ba-stering-with-existing-email-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/auth/login.spec.ts:4:7 › Login Flow › should login successfully with valid admin credentials 
+  1 flaky
+    [chromium] › tests/e2e/auth/register.spec.ts:23:7 › Registration Flow › should fail when registering with existing email 
+  5 passed (42.7s)
+ ELIFECYCLE  Command failed with exit code 1.
+Error: Process completed with exit code 1.

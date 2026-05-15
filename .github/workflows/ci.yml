@@ -1,0 +1,661 @@
+name: CI + Deploy
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main", "staging"]
+
+jobs:
+  # ── Job 0: CI Loop Guard ─────────────────────────────────────────────────────
+  # Mencegah infinite loop saat CI commit migration file dan push balik ke repo.
+  # Skip jika: (1) commit dari github-actions[bot], atau (2) message mengandung [skip ci]
+  check-skip:
+    name: CI Loop Guard
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.check.outputs.should_skip }}
+    steps:
+      - id: check
+        env:
+          GH_ACTOR: ${{ github.actor }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          if [[ "$GH_ACTOR" == "github-actions[bot]" ]]; then
+            echo "Skipping CI — triggered by github-actions[bot]"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+          elif [[ "$COMMIT_MSG" == *"[skip ci]"* ]]; then
+            echo "Skipping CI — commit message contains [skip ci]"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_skip=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ── Job 1: Build & Lint ──────────────────────────────────────────────────────
+  # Berjalan di semua branch dan pull request.
+  # Menggunakan dummy env vars — tidak perlu database sungguhan saat build.
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    needs: check-skip
+    if: needs.check-skip.outputs.should_skip != 'true'
+
+    env:
+      DATABASE_URL: "postgresql://postgres:password@localhost:5432/mydb"
+      DIRECT_URL: "postgresql://postgres:password@localhost:5432/mydb"
+      NEXTAUTH_SECRET: "dummy_secret_for_build_process_12345"
+      NEXTAUTH_URL: "http://localhost:3000"
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma generate
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+  # ── Job 2: Generate Migration ────────────────────────────────────────────────
+  # Deteksi drift antara schema.prisma dan migration files yang ada.
+  # Jika ada perubahan schema yang belum punya migration → generate dan commit balik.
+  # Job ini INDEPENDENT dari E2E toggle — selalu jalan di fast-track maupun normal.
+  generate-migration:
+    name: Generate Migration (if needed)
+    runs-on: ubuntu-latest
+    needs: [check-skip, build]
+    if: needs.check-skip.outputs.should_skip != 'true' && github.event_name == 'push'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: migration_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+          ref: ${{ github.ref }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
+      - name: Apply existing migrations
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/migration_db"
+          DIRECT_URL: "postgresql://postgres:password@localhost:5432/migration_db"
+        run: npx prisma migrate deploy
+
+      - name: Check for schema drift
+        id: drift
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/migration_db"
+          DIRECT_URL: "postgresql://postgres:password@localhost:5432/migration_db"
+        run: |
+          # --from-url: diff dari database state (sudah punya semua existing migrations)
+          # --to-schema-datamodel: diff ke target schema file
+          # exit code 0 = no diff, exit code 2 = has diff, exit code 1 = error
+          set +e
+          npx prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel ./prisma/schema.prisma \
+            --exit-code
+          EXIT_CODE=$?
+          set -e
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "No schema drift detected"
+            echo "has_drift=false" >> $GITHUB_OUTPUT
+          elif [ $EXIT_CODE -eq 2 ]; then
+            echo "Schema drift detected — migration needed"
+            echo "has_drift=true" >> $GITHUB_OUTPUT
+          else
+            echo "::error::prisma migrate diff failed with exit code $EXIT_CODE"
+            exit 1
+          fi
+
+      - name: Generate migration via diff --script
+        if: steps.drift.outputs.has_drift == 'true'
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/migration_db"
+          DIRECT_URL: "postgresql://postgres:password@localhost:5432/migration_db"
+        run: |
+          MIGRATION_NAME="auto_$(date +%Y%m%d%H%M%S)"
+          MIGRATION_DIR="prisma/migrations/${MIGRATION_NAME}"
+          mkdir -p "$MIGRATION_DIR"
+
+          # Generate SQL menggunakan migrate diff --script (NON-INTERACTIVE)
+          # --from-url: gunakan database state (existing migrations sudah di-apply)
+          npx prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel ./prisma/schema.prisma \
+            --script > "$MIGRATION_DIR/migration.sql"
+
+          echo "=== Generated migration SQL ==="
+          cat "$MIGRATION_DIR/migration.sql"
+
+          # Validasi: tolak migration yang mengandung DROP atau RENAME
+          if grep -qiE '^\s*(DROP\s+TABLE|DROP\s+COLUMN|ALTER\s+.*RENAME)' "$MIGRATION_DIR/migration.sql"; then
+            echo "::error::Migration mengandung operasi destructive (DROP/RENAME). Butuh manual review."
+            exit 1
+          fi
+
+          echo "Migration generated: $MIGRATION_DIR"
+
+      - name: Verify migration applies cleanly
+        if: steps.drift.outputs.has_drift == 'true'
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/migration_db"
+          DIRECT_URL: "postgresql://postgres:password@localhost:5432/migration_db"
+        run: |
+          npx prisma migrate deploy
+          echo "Migration verified successfully"
+
+      - name: Commit and push migration
+        if: steps.drift.outputs.has_drift == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add prisma/migrations/
+          git commit -m "chore: auto-generate prisma migration [skip ci]"
+          git push
+
+  # ── Job 3: E2E Test ──────────────────────────────────────────────────────────
+  # Berjalan setelah migration generation selesai.
+  # Menggunakan prisma migrate deploy (SAMA dengan production) — bukan db push.
+  e2e-test:
+    name: E2E Test
+    runs-on: ubuntu-latest
+    needs: [check-skip, generate-migration]
+    if: needs.check-skip.outputs.should_skip != 'true'
+    timeout-minutes: 60
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: mydb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
+      # Menggunakan prisma migrate deploy — SAMA dengan production
+      # Migration files sudah ada (dari generate-migration job atau dari repo)
+      - name: Setup Database
+        run: pnpm prisma migrate deploy
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/mydb"
+          DIRECT_URL: "postgresql://postgres:password@localhost:5432/mydb"
+
+      # Generate Prisma Client — diperlukan karena migrate deploy tidak auto-generate
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Seed Database
+        run: pnpm prisma db seed
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/mydb"
+          DIRECT_URL: "postgresql://postgres:password@localhost:5432/mydb"
+
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "PLAYWRIGHT_VERSION=$(pnpm list @playwright/test --depth=0 | sed -n 's/.*@playwright\/test \([0-9.]*\).*/\1/p')" >> $GITHUB_ENV
+
+      - name: Cache Playwright Browsers
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+
+      - name: Install Playwright Browsers
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Run Playwright tests
+        run: pnpm test:e2e
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/mydb"
+          DIRECT_URL: "postgresql://postgres:password@localhost:5432/mydb"
+          NEXT_PUBLIC_API_URL: "http://localhost:3000"
+          AUTH_SECRET: "dummy_secret_for_e2e_test"
+          NEXTAUTH_SECRET: "dummy_secret_for_e2e_test"
+          AUTH_URL: "http://localhost:3000"
+          NEXTAUTH_URL: "http://localhost:3000"
+          AUTH_TRUST_HOST: "true"
+          NODE_ENV: "test"
+          CI: true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  # ── Job 4: Deploy to Vercel ──────────────────────────────────────────────────
+  # Hanya berjalan jika:
+  #   1. Job "e2e-test" berhasil PASS  (needs: e2e-test)
+  #   2. Event adalah push             (bukan pull_request)
+  #   3. Branch adalah "staging" atau "main"
+  #
+  # Naming convention Vercel project (otomatis, tanpa VERCEL_PROJECT_ID):
+  #   branch staging → {repo-name}-staging
+  #   branch main    → {repo-name}-production
+  #
+  # Secrets yang dibutuhkan (set di level GitHub Organisasi, berlaku semua repo):
+  #   VERCEL_TOKEN   → API token Vercel
+  #   VERCEL_ORG_ID  → Team ID Vercel (team_xxxx)
+  #   DIRECT_URL     → Direct (non-pooled) database connection string
+  #   DATABASE_URL   → Pooled database connection string (with ?pgbouncer=true)
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: e2e-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Tentukan nama project Vercel dan apakah ini production deployment
+      - name: Set deploy target
+        id: target
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "project_name=${REPO}-production" >> $GITHUB_OUTPUT
+          else
+            echo "project_name=${REPO}-staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      # Cek apakah Vercel project sudah ada.
+      # Jika belum → buat otomatis via Vercel API dan link ke GitHub repo.
+      # Juga set commandForIgnoringBuildStep="exit 0" agar Vercel tidak
+      # auto-deploy dari GitHub webhook (deploy dikontrol penuh oleh job ini).
+      - name: Get or create Vercel project
+        id: vercel_project
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          PROJECT_NAME: ${{ steps.target.outputs.project_name }}
+          DB_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'change_me_in_vercel_dashboard_32chars_min' }}
+        run: |
+          # teamId param hanya disertakan jika VERCEL_ORG_ID tidak kosong
+          if [[ -n "$VERCEL_ORG_ID" ]]; then
+            TEAM_PARAM="?teamId=${VERCEL_ORG_ID}"
+          else
+            TEAM_PARAM=""
+          fi
+
+          NEXTAUTH_URL_VALUE="https://${PROJECT_NAME}.vercel.app"
+
+          # Cek apakah project sudah ada
+          HTTP_STATUS=$(curl -s -o /tmp/vercel_res.json -w "%{http_code}" \
+            "https://api.vercel.com/v9/projects/${PROJECT_NAME}${TEAM_PARAM}" \
+            -H "Authorization: Bearer ${VERCEL_TOKEN}")
+
+          echo "GET project status: ${HTTP_STATUS}"
+
+          if [[ "$HTTP_STATUS" == "200" ]]; then
+            echo "Vercel project '${PROJECT_NAME}' sudah ada. Ensuring framework=nextjs..."
+            curl -s -X PATCH \
+              "https://api.vercel.com/v9/projects/${PROJECT_NAME}${TEAM_PARAM}" \
+              -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d '{"framework":"nextjs"}' \
+              | jq '{id,framework}' || true
+          else
+            echo "Project belum ada (HTTP ${HTTP_STATUS}), membuat baru..."
+
+            # Bangun JSON payload dengan jq agar aman dari special characters
+            PAYLOAD=$(jq -n \
+              --arg name      "$PROJECT_NAME" \
+              --arg repo      "${{ github.repository }}" \
+              --arg db_url    "$DB_URL" \
+              --arg secret    "$AUTH_SECRET" \
+              --arg auth_url  "$NEXTAUTH_URL_VALUE" \
+              '{
+                name: $name,
+                framework: "nextjs",
+                gitRepository: {type: "github", repo: $repo},
+                commandForIgnoringBuildStep: "exit 0",
+                environmentVariables: [
+                  {key: "DATABASE_URL",    value: $db_url,   type: "encrypted", target: ["production","preview","development"]},
+                  {key: "NEXTAUTH_SECRET", value: $secret,   type: "encrypted", target: ["production","preview","development"]},
+                  {key: "AUTH_SECRET",     value: $secret,   type: "encrypted", target: ["production","preview","development"]},
+                  {key: "NEXTAUTH_URL",    value: $auth_url, type: "plain",      target: ["production","preview","development"]},
+                  {key: "AUTH_URL",        value: $auth_url, type: "plain",      target: ["production","preview","development"]}
+                ]
+              }')
+
+            # POST create project — tampilkan response jika gagal
+            POST_STATUS=$(curl -s -o /tmp/vercel_res.json -w "%{http_code}" \
+              -X POST \
+              "https://api.vercel.com/v9/projects${TEAM_PARAM}" \
+              -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+
+            echo "POST project status: ${POST_STATUS}"
+
+            if [[ "$POST_STATUS" != "200" && "$POST_STATUS" != "201" ]]; then
+              echo "::error::Gagal membuat Vercel project. Response:"
+              cat /tmp/vercel_res.json
+              exit 1
+            fi
+
+            echo "Vercel project '${PROJECT_NAME}' berhasil dibuat."
+          fi
+
+          PROJECT_ID=$(jq -r '.id' /tmp/vercel_res.json)
+          echo "project_id=${PROJECT_ID}" >> $GITHUB_OUTPUT
+          echo "Project ID: ${PROJECT_ID}"
+
+      # Buat .vercel/project.json agar Vercel CLI tahu ke project mana deploy dilakukan
+      - name: Link Vercel project
+        run: |
+          mkdir -p .vercel
+          echo "{\"orgId\":\"${{ secrets.VERCEL_ORG_ID }}\",\"projectId\":\"${{ steps.vercel_project.outputs.project_id }}\"}" \
+            > .vercel/project.json
+
+      # Upsert env vars ke Vercel project (berlaku untuk project baru maupun yang sudah ada).
+      # Menggunakan ?upsert=true agar key yang sudah ada ikut ter-update.
+      # Termasuk DIRECT_URL untuk Prisma CLI operations.
+      - name: Upsert environment variables
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          PROJECT_ID: ${{ steps.vercel_project.outputs.project_id }}
+          DB_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          AUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'change_me_in_vercel_dashboard_32chars_min' }}
+          PROJECT_NAME: ${{ steps.target.outputs.project_name }}
+        run: |
+          if [[ -z "$DB_URL" ]]; then
+            echo "::error::SECRET 'DATABASE_URL' tidak ditemukan di GitHub. Abort."
+            exit 1
+          fi
+
+          if [[ -n "$VERCEL_ORG_ID" ]]; then
+            TEAM_PARAM="?teamId=${VERCEL_ORG_ID}&upsert=true"
+          else
+            TEAM_PARAM="?upsert=true"
+          fi
+
+          NEXTAUTH_URL_VALUE="https://${PROJECT_NAME}.vercel.app"
+
+          PAYLOAD=$(jq -n \
+            --arg db_url     "$DB_URL" \
+            --arg direct_url "$DIRECT_URL" \
+            --arg secret     "$AUTH_SECRET" \
+            --arg auth_url   "$NEXTAUTH_URL_VALUE" \
+            '[
+              {key: "DATABASE_URL",    value: $db_url,     type: "encrypted", target: ["production","preview","development"]},
+              {key: "DIRECT_URL",      value: $direct_url,  type: "encrypted", target: ["production","preview","development"]},
+              {key: "NEXTAUTH_SECRET", value: $secret,      type: "encrypted", target: ["production","preview","development"]},
+              {key: "AUTH_SECRET",     value: $secret,      type: "encrypted", target: ["production","preview","development"]},
+              {key: "NEXTAUTH_URL",    value: $auth_url,    type: "plain",     target: ["production","preview","development"]},
+              {key: "AUTH_URL",        value: $auth_url,    type: "plain",     target: ["production","preview","development"]}
+            ]')
+
+          STATUS=$(curl -s -o /tmp/env_res.json -w "%{http_code}" \
+            -X POST \
+            "https://api.vercel.com/v10/projects/${PROJECT_ID}/env${TEAM_PARAM}" \
+            -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          echo "Upsert env vars status: ${STATUS}"
+          if [[ "$STATUS" != "200" && "$STATUS" != "201" ]]; then
+            echo "::error::Gagal upsert env vars. Response:"
+            cat /tmp/env_res.json
+            exit 1
+          fi
+          echo "Environment variables (DATABASE_URL, DIRECT_URL, NEXTAUTH_SECRET, NEXTAUTH_URL) berhasil di-update."
+
+      # Install dependencies untuk menjalankan prisma migrate deploy
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Jalankan Prisma migrations ke database production (Supabase)
+      # Idempotent: hanya apply migrasi yang belum diapply
+      # Retry max 3x untuk handle transient connection errors
+      - name: Run Prisma Migrations
+        timeout-minutes: 3
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: |
+          MAX_RETRIES=3
+          ATTEMPT=0
+
+          while [ $ATTEMPT -lt $MAX_RETRIES ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "=== Attempt $ATTEMPT/$MAX_RETRIES ==="
+
+            if npx prisma migrate deploy; then
+              echo "Migration berhasil diterapkan"
+              exit 0
+            fi
+
+            if [ $ATTEMPT -lt $MAX_RETRIES ]; then
+              echo "Attempt $ATTEMPT gagal. Retry dalam 5 detik..."
+              sleep 5
+            fi
+          done
+
+          echo "::error::Prisma migrate deploy gagal setelah $MAX_RETRIES percobaan"
+          exit 1
+
+      # Buat default admin user di database (idempotent)
+      # Hanya jalan jika DEFAULT_ADMIN_EMAIL + DEFAULT_ADMIN_PASSWORD
+      # di-set di GitHub Org Secrets
+      - name: Setup Default Admin
+        continue-on-error: true
+        timeout-minutes: 1
+        run: pnpm prisma generate && pnpm tsx scripts/setup-default-admin.ts
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          DEFAULT_ADMIN_EMAIL: ${{ secrets.DEFAULT_ADMIN_EMAIL }}
+          DEFAULT_ADMIN_PASSWORD: ${{ secrets.DEFAULT_ADMIN_PASSWORD }}
+          DEFAULT_ADMIN_NAME: ${{ secrets.DEFAULT_ADMIN_NAME }}
+
+      # Inspect Vercel project before deploying
+      - name: Inspect Vercel project
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          PROJECT_ID: ${{ steps.vercel_project.outputs.project_id }}
+          PROJECT_NAME: ${{ steps.target.outputs.project_name }}
+        run: |
+          if [[ -n "$VERCEL_ORG_ID" ]]; then
+            TEAM_PARAM="?teamId=${VERCEL_ORG_ID}"
+          else
+            TEAM_PARAM=""
+          fi
+          echo "=== Project info ==="
+          curl -s "https://api.vercel.com/v9/projects/${PROJECT_NAME}${TEAM_PARAM}" \
+            -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+            | jq '{id,name,framework,productionBranch,aliases:[.alias[]|select(.type=="SYSTEM")|.domain]}' \
+            || echo "Failed to get project info"
+
+          echo "=== Recent deployments ==="
+          curl -s "https://api.vercel.com/v6/deployments?projectId=${PROJECT_ID}&limit=3${TEAM_PARAM:+&teamId=${VERCEL_ORG_ID}}" \
+            -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+            | jq '.deployments[]|"\(.url) | \(.state) | \(.meta.githubCommitMessage // "")"' \
+            || echo "Failed to list deployments"
+
+      # Deploy source ke Vercel — Vercel build di server mereka (remote build)
+      # Lebih reliable karena Vercel tahu framework=nextjs dan build environment-nya
+      - name: Deploy to Vercel
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ steps.vercel_project.outputs.project_id }}
+          PROJECT_NAME: ${{ steps.target.outputs.project_name }}
+        run: |
+          echo "=== Starting remote deployment ==="
+          # Use set -o pipefail so pipeline exit = vercel's exit, not tee's
+          set -o pipefail
+          vercel deploy --prod --token="${VERCEL_TOKEN}" 2>&1 | tee /tmp/vercel_deploy.log
+          echo "=== Full deploy log ==="
+          cat /tmp/vercel_deploy.log
+
+          # Extract the deployment URL (last https:// line)
+          DEPLOY_URL=$(grep -oE 'https://[^ ]+\.vercel\.app' /tmp/vercel_deploy.log | tail -1)
+          echo "=== Deployment URL: ${DEPLOY_URL} ==="
+          echo "url=${DEPLOY_URL}" >> $GITHUB_OUTPUT
+
+      # Post-deploy health check: verifikasi semua tabel database ada
+      - name: Post-deploy Health Check
+        timeout-minutes: 2
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+          PROJECT_NAME: ${{ steps.target.outputs.project_name }}
+        run: |
+          PROD_URL="https://${PROJECT_NAME}.vercel.app"
+
+          echo "Waiting 20s for Vercel cold start..."
+          sleep 20
+
+          # Cek health endpoint jika ada
+          HEALTH_URL="${PROD_URL}/api/health"
+          MAX_RETRIES=3
+          HEALTH_PASSED=false
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            RESPONSE=$(curl -s -w "\n%{http_code}" "$HEALTH_URL" 2>/dev/null || true)
+            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Health check passed!"
+              echo "$BODY" | jq . 2>/dev/null || echo "$BODY"
+              HEALTH_PASSED=true
+              break
+            elif [ "$HTTP_CODE" = "404" ]; then
+              # INTENTIONAL: project lama tanpa /api/health endpoint tetap bisa deploy.
+              # Health check aktif otomatis setelah project update ke base template terbaru.
+              echo "Health endpoint not found (404) — skipping (backwards compatibility)"
+              HEALTH_PASSED=true
+              break
+            fi
+
+            echo "Attempt $i/$MAX_RETRIES: HTTP $HTTP_CODE"
+            echo "$BODY" | jq . 2>/dev/null || echo "$BODY"
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              sleep 15
+            fi
+          done
+
+          if [ "$HEALTH_PASSED" = "false" ]; then
+            echo "::error::Health check gagal setelah $MAX_RETRIES percobaan"
+            echo "::error::Deployment memiliki tabel yang missing. Cek /api/health untuk detail."
+            exit 1
+          fi
+
+          # Fallback: cek basic URL accessibility
+          echo "=== Basic URL check ==="
+          for url in "${DEPLOY_URL}" "${PROD_URL}"; do
+            if [[ -z "$url" ]]; then continue; fi
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$url" || echo "000")
+            echo "  ${url} -> HTTP ${HTTP_CODE}"
+          done
