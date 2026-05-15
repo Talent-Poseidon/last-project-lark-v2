@@ -80,7 +80,6 @@ export async function POST(request: NextRequest) {
     const updated: typeof rows = [];
     const unchanged: typeof rows = [];
     const incomingCodes = new Set(rows.map((r) => r.code));
-    const deleted = existing.filter((e) => !incomingCodes.has(e.code));
 
     for (const row of rows) {
       const existingRow = existingByCode.get(row.code);
@@ -98,7 +97,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!confirm && existing.length > 0) {
+    // An upload is treated as a re-upload (full replace) only when at least one
+    // incoming code overlaps with an existing item. Without overlap the upload
+    // is purely additive — nothing is deleted and no preview is required.
+    const isReplaceMode = updated.length + unchanged.length > 0;
+    const deleted = isReplaceMode
+      ? existing.filter((e) => !incomingCodes.has(e.code))
+      : [];
+
+    if (isReplaceMode && !confirm) {
       return NextResponse.json({
         preview: true,
         created,
