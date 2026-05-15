@@ -17,6 +17,8 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Next.js Fullstack Boilerplate",
   description:
