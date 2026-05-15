@@ -58,7 +58,34 @@ async function main() {
     },
   });
 
-  console.log({ originalAdmin, testAdmin, testUser });
+  // Seed Kamus items for E2E tests
+  const seedKamusPotensi = await prisma.kamusItem.upsert({
+    where: { code: 'seed-kamus-potensi-1' },
+    update: {},
+    create: {
+      id: 'seed-kamus-potensi-1',
+      code: 'seed-kamus-potensi-1',
+      name: 'Seed Analytical Thinking',
+      type: 'potensi',
+      description: 'Seeded potensi for E2E tests',
+      behavioralIndicators: 'Indicator A | Indicator B',
+    },
+  });
+
+  const seedKamusKompetensi = await prisma.kamusItem.upsert({
+    where: { code: 'seed-kamus-kompetensi-1' },
+    update: {},
+    create: {
+      id: 'seed-kamus-kompetensi-1',
+      code: 'seed-kamus-kompetensi-1',
+      name: 'Seed Leadership',
+      type: 'kompetensi',
+      description: 'Seeded kompetensi for E2E tests',
+      behavioralIndicators: 'Inspires team | Sets direction',
+    },
+  });
+
+  console.log({ originalAdmin, testAdmin, testUser, seedKamusPotensi, seedKamusKompetensi });
 }
 
 main()

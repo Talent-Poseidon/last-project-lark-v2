@@ -328,6 +328,36 @@ jobs:
   #   VERCEL_ORG_ID  → Team ID Vercel (team_xxxx)
   #   DIRECT_URL     → Direct (non-pooled) database connection string
   #   DATABASE_URL   → Pooled database connection string (with ?pgbouncer=true)
+
+  # ── Job: Auto-Merge to Staging (Injected by Agent) ───────────────────────────
+  automerge-staging:
+    name: Auto-Merge to Staging
+    runs-on: ubuntu-latest
+    needs: [build, e2e-test]
+    if: success() && github.ref_name != 'staging' && github.ref_name != 'main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Setup Git Identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge to Staging
+        run: |
+          # Fetch latest of trigger branch — picks up mid-run commits like generate-migration's
+          # auto-commit, which would be missed if we merged ${{ github.sha }} (trigger SHA).
+          git fetch origin ${{ github.ref_name }}
+          git checkout staging || git checkout -b staging origin/staging
+          git pull origin staging
+          git merge --no-ff origin/${{ github.ref_name }} -m "Auto-merge from CI for ${{ github.ref_name }}"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git staging
+
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
@@ -336,6 +366,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       # Tentukan nama project Vercel dan apakah ini production deployment
       - name: Set deploy target

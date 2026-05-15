@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@mantine/core";
+import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 
 export default function AdminError({
@@ -25,7 +25,6 @@ export default function AdminError({
         onClick={reset}
         className="mt-6"
         variant="outline"
-        size="md"
       >
         Try again
       </Button>
